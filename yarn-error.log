@@ -1,0 +1,36 @@
+Arguments: 
+  /usr/local/Cellar/node/8.8.1/bin/node /usr/local/Cellar/yarn/1.2.1/libexec/bin/yarn.js init
+
+PATH: 
+  /usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/matheuspenna/.android-sdk-macosx/platform-tools/:/Users/matheuspenna/Android//platform-tools:/Users/matheuspenna/Android//platform:/Users/matheuspenna/Android//tools:/Library/Java/JavaVirtualMachines/jdk1.8.0_151.jdk/Contents/Home
+
+Yarn version: 
+  1.2.1
+
+Node version: 
+  8.8.1
+
+Platform: 
+  darwin x64
+
+npm manifest: 
+  No manifest
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
+
+Trace: 
+  Error: canceled
+      at Interface.<anonymous> (/usr/local/Cellar/yarn/1.2.1/libexec/lib/cli.js:120971:13)
+      at emitNone (events.js:105:13)
+      at Interface.emit (events.js:207:7)
+      at Interface._ttyWrite (readline.js:775:16)
+      at ReadStream.onkeypress (readline.js:160:10)
+      at emitTwo (events.js:125:13)
+      at ReadStream.emit (events.js:213:7)
+      at emitKeys (internal/readline.js:420:14)
+      at emitKeys.next (<anonymous>)
+      at ReadStream.onData (readline.js:1011:36)
