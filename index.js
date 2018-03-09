@@ -1,4 +1,4 @@
-import { Question, Feedback } from './components';
+import { Question, Feedback } from './src';
 
 export {
   Question,
