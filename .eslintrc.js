@@ -11,10 +11,13 @@ module.exports = {
   "rules": {
     "class-methods-use-this": "off",
     "comma-dangle": ["error", "never"],
+    "import/no-extraneous-dependencies": 0,
+    "import/no-unresolved": 0,
     "indent": ["error", 2, {
         "SwitchCase": 1
     }],
     "global-require": "off",
+    "no-console": "off",
     "no-underscore-dangle": ["error", {
         "allowAfterThis": true
     }],
