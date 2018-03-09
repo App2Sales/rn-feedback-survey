@@ -38,6 +38,10 @@ class Question extends Component {
 
   getComponentEvaluationApp = () => {
     const { question } = this.state;
+    const { onQuestionAnswered } = this.props;
+    const submitAction = onQuestionAnswered ? 
+      onQuestionAnswered(this.state.question, this.state.response) :
+      () => this.sendReport(this.state.question, this.state.response);
     return (
       <View style={styles.whiteBoxContainer}>
         <Text style={styles.title}>{this.props.title}</Text>
@@ -45,36 +49,36 @@ class Question extends Component {
         <View style={styles.alternativesEvaluationContainer}>
           {this.renderEvaluationAlternatives()}
         </View>
-        {this.renderButtons(
-          this.closeModal,
-          () => this.sendReport(this.state.question, { rating: this.state.rating })
-        )}
+        {this.renderButtons(this.closeModal, submitAction)}
       </View>
     );
   }
-
-  getComponentMultipleChoice = () => (
-    <View style={styles.whiteBoxContainer}>
-      <Text style={styles.title}>{this.props.title}</Text>
-      <Text style={styles.question}>{this.state.question.question.title}</Text>
-      <View style={styles.alternativesContainer}>
-        {this.state.question.question.alternatives.map(item => (
-          <CheckBox
-            key={item.index}
-            title={item.text}
-            onPress={() => this.onPressCheckBox(item)}
-            checkedIcon={'dot-circle-o'}
-            uncheckedIcon={'circle-o'}
-            checked={item.checked}
-            containerStyle={styles.alternativeView}
-            textStyle={styles.alternativeText} />
-        ))}
-      </View>
-      {this.renderButtons(
-        this.closeModal,
-        () => this.sendReport(this.state.question, this.state.response)
-      )}
-    </View>);
+  
+  getComponentMultipleChoice = () => {
+    const { onQuestionAnswered } = this.props;
+    const submitAction = onQuestionAnswered ? 
+      onQuestionAnswered(this.state.question, this.state.response) :
+      () => this.sendReport(this.state.question, this.state.response);
+    return (
+      <View style={styles.whiteBoxContainer}>
+        <Text style={styles.title}>{this.props.title}</Text>
+        <Text style={styles.question}>{this.state.question.question.title}</Text>
+        <View style={styles.alternativesContainer}>
+          {this.state.question.question.alternatives.map(item => (
+            <CheckBox
+              key={item.index}
+              title={item.text}
+              onPress={() => this.onPressCheckBox(item)}
+              checkedIcon={'dot-circle-o'}
+              uncheckedIcon={'circle-o'}
+              checked={item.checked}
+              containerStyle={styles.alternativeView}
+              textStyle={styles.alternativeText} />
+          ))}
+        </View>
+        {this.renderButtons(this.closeModal, submitAction)}
+      </View>);
+  };
 
   getPreparedQuestions(questions) {
     if (questions.length > 0) {
@@ -163,34 +167,38 @@ class Question extends Component {
   }
 
   sendReport = (question, response) => {
-    if ((response.rating !== undefined) && (response.rating === 5)) {
-      this.setState({ sendStoreConfirmationVisible: true, questionVisibile: false });
+    const { onSendAnswer } = this.props;
+    if (onSendAnswer) {
+      onSendAnswer(question, response);
     } else {
-      this.closeModal();
-    }
-    feedback.postQuestion(question, response)
-      .then((result) => {
-        if (result.status === 200) {
-          AsyncStorage.getItem('@app2sales-feedback-questions').then((value) => {
-            const localQuestions = JSON.parse(value);
-            localQuestions.questionMap = localQuestions.questionMap.map((item) => {
-              const newItem = {};
-              Object.assign(newItem, item);
-              if (item.index === this.state.question.index) {
-                newItem.answered = true;
-              }
-              return newItem;
+      if ((response.rating !== undefined) && (response.rating === 5)) {
+        this.setState({ sendStoreConfirmationVisible: true, questionVisibile: false });
+      }
+      feedback.postQuestion(question, response)
+        .then((result) => {
+          if (result.status === 200) {
+            AsyncStorage.getItem('@app2sales-feedback-questions').then((value) => {
+              const localQuestions = JSON.parse(value);
+              localQuestions.questionMap = localQuestions.questionMap.map((item) => {
+                const newItem = {};
+                Object.assign(newItem, item);
+                if (item.index === this.state.question.index) {
+                  newItem.answered = true;
+                }
+                return newItem;
+              });
+              AsyncStorage.setItem(
+                '@app2sales-feedback-questions',
+                JSON.stringify(localQuestions)
+              );
             });
-            AsyncStorage.setItem(
-              '@app2sales-feedback-questions',
-              JSON.stringify(localQuestions)
-            );
-          });
-        }
-      })
-      .catch((error) => {
-        console.log('Erro: ', error);
-      });
+          }
+        })
+        .catch((error) => {
+          console.log('Erro: ', error);
+        });
+    }
+    this.closeModal();
   }
 
   handleCheckAlternatives = result => this.state.question.question.alternatives.map(item => ({
