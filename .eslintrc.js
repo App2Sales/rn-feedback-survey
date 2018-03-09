@@ -11,6 +11,9 @@ module.exports = {
   "rules": {
     "class-methods-use-this": "off",
     "comma-dangle": ["error", "never"],
+    "import/extensions": [ "always", {
+      "ignorePackages": true
+    }],
     "import/no-extraneous-dependencies": 0,
     "import/no-unresolved": 0,
     "indent": ["error", 2, {
