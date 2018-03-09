@@ -40,7 +40,7 @@ class Question extends Component {
     const { question } = this.state;
     const { onQuestionAnswered } = this.props;
     const submitAction = onQuestionAnswered ? 
-      onQuestionAnswered(this.state.question, this.state.response) :
+      () => onQuestionAnswered(this.state.question, this.state.response) :
       () => this.sendReport(this.state.question, this.state.response);
     return (
       <View style={styles.whiteBoxContainer}>
@@ -57,7 +57,7 @@ class Question extends Component {
   getComponentMultipleChoice = () => {
     const { onQuestionAnswered } = this.props;
     const submitAction = onQuestionAnswered ? 
-      onQuestionAnswered(this.state.question, this.state.response) :
+      () => onQuestionAnswered(this.state.question, this.state.response) :
       () => this.sendReport(this.state.question, this.state.response);
     return (
       <View style={styles.whiteBoxContainer}>
