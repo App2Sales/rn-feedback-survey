@@ -1,8 +1,27 @@
 {
   "name": "react-native-survey",
-  "version": "1.0.0",
-  "main": "index.js",
-  "repository": "https://github.org/app2sales/react-native-survey.git",
+  "version": "0.1.0",
+  "description": "Ask your users abtou your app",
   "author": "<matheusnpenna@gmail.com>",
-  "license": "MIT"
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "https://github.org/app2sales/react-native-survey.git"
+  },
+  "keywords": [
+    "react-native",
+    "component",
+    "survey"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/app2sales/react-native-survey/issues"
+  },
+  "homepage": "https://github.com/app2sales/react-native-survey",
+  "files": [
+  ],
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
 }
