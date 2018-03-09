@@ -40,69 +40,69 @@ class Feedback {
     });
   }
 
-    getChangeLog = () =>
-      this.api.get(`/changeLog?project=${this.project}`)
-        .then((response) => {
-          if (response.ok) {
-            return response.data;
-          }
-          return [];
-        });
+  getChangeLog = () =>
+    this.api.get(`/changeLog?project=${this.project}`)
+      .then((response) => {
+        if (response.ok) {
+          return response.data;
+        }
+        return [];
+      });
 
-    getSubjects = () =>
-      this.api.get(`/subjects?project=${this.project}`)
-        .then((response) => {
-          if (response.ok) {
-            return response.data;
-          }
-          return [];
-        });
+  getSubjects = () =>
+    this.api.get(`/subjects?project=${this.project}`)
+      .then((response) => {
+        if (response.ok) {
+          return response.data;
+        }
+        return [];
+      });
 
-    getFeedbackEnabled = () =>
-      this.api.get(`/feedbackEnabled?project=${this.project}`)
-        .then((response) => {
-          if (response.ok) {
-            return response.data;
-          }
-          return [];
-        });
+  getFeedbackEnabled = () =>
+    this.api.get(`/feedbackEnabled?project=${this.project}`)
+      .then((response) => {
+        if (response.ok) {
+          return response.data;
+        }
+        return [];
+      });
 
-    postFeedback(subject, comment, rating, additionalData = null, print = null) {
-      const data = {
-        subject,
-        comment,
-        rating,
-        additionalData,
-        deviceInfo,
-        project: this.project
-      };
-      return this.api.post('/feedback', data);
-    }
+  postFeedback(subject, comment, rating, additionalData = null, print = null) {
+    const data = {
+      subject,
+      comment,
+      rating,
+      additionalData,
+      deviceInfo,
+      project: this.project
+    };
+    return this.api.post('/feedback', data);
+  }
 
   /* ### blocos de código para as funções de questionário ### */
 
-    getQuestions = () =>
-      this.api.post('/questions', { project: this.project })
-        .then((response) => {
-          if (response.ok) {
-            return response.data;
-          }
-          return [];
-        });
+  getQuestions = () =>
+    this.api.post('/questions', { project: this.project })
+      .then((response) => {
+        if (response.ok) {
+          return response.data;
+        }
+        return [];
+      });
 
-    postQuestion = (question, response, user = null, additionalData = null) => {
-      const data = {
-        question,
-        response,
-        user,
-        additionalData,
-        deviceInfo,
-        project: this.project
-      };
-      return this.api.post('/responsequestions', data);
-    }
+  postQuestion = (question, response, user = null, additionalData = null) => {
+    const data = {
+      question,
+      response,
+      user,
+      additionalData,
+      deviceInfo,
+      project: this.project
+    };
+    return this.api.post('/responsequestions', data);
+  }
+
   /* ### blocos de código para as funções de questionário ### */
-
   sendToStore = () => {
     const storeBaseUrl = Platform.OS === 'android' ? GOOGLE_PREFIX : APPLENATIVE_PREFIX;
     const completeUrl = `${storeBaseUrl}${deviceInfo.bundleId}`;
