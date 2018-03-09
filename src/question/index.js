@@ -334,7 +334,9 @@ Question.propTypes = {
   /* Prop used to render samples of messages
     * to make more easy the call on the father class!! */
   title: PropTypes.string,
-  type: PropTypes.string
+  type: PropTypes.string,
+  onQuestionAnswered: PropTypes.func,
+  onSendAnswer: PropTypes.func
 };
 
 Question.defaultProps = {
