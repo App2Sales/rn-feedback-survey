@@ -6,7 +6,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "https://github.org/app2sales/react-native-survey.git"
+    "url": "https://github.org/app2sales/react-native-survey.git"
   },
   "keywords": [
     "react-native",
@@ -18,10 +18,12 @@
     "url": "https://github.com/app2sales/react-native-survey/issues"
   },
   "homepage": "https://github.com/app2sales/react-native-survey",
-  "files": [
-  ],
+  "files": [],
   "dependencies": {
+    "moment": "^2.21.0",
+    "prop-types": "^15.6.1",
+    "react-native-elements": "^0.19.0",
+    "react-native-modal": "^5.2.0"
   },
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }
