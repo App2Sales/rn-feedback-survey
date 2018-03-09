@@ -4,8 +4,8 @@ import { CheckBox } from 'react-native-elements';
 import PropTypes from 'prop-types';
 import Modal from 'react-native-modal';
 import moment from 'moment';
-import icons from '../../config';
-import feedback from '../../functions';
+import icons from '../../config/icons';
+import feedback from '../../functions/feedback';
 import styles from './styles';
 
 class Question extends Component {
