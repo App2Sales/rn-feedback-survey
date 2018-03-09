@@ -12,10 +12,10 @@ class Question extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      visible: true,
+      visible: false,
       response: null,
       rating: 0,
-      questionVisibile: true,
+      questionVisibile: false,
       question: null,
       sendStoreConfirmationVisible: false
     };
@@ -168,6 +168,7 @@ class Question extends Component {
 
   sendReport = (question, response) => {
     const { onSendAnswer } = this.props;
+    console.log('PASSEI AQUI ######>>>>>>>>');
     if (onSendAnswer) {
       onSendAnswer(question, response);
     } else {
