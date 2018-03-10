@@ -142,7 +142,6 @@ class Question extends Component {
           //   localQuestions.questionMap = this.getPreparedQuestions(serverQuestions);
           //   localQuestions.lastFetch = new Date().getTime();
           // }
-
           const question = this.getAppearQuestion(localQuestions);
           if (question !== undefined) {
             this.setState({ visible: true, questionVisibile: true, question });
@@ -168,7 +167,6 @@ class Question extends Component {
 
   sendReport = (question, response) => {
     const { onSendAnswer } = this.props;
-    console.log('PASSEI AQUI ######>>>>>>>>');
     if (onSendAnswer) {
       onSendAnswer(question, response);
     } else {
