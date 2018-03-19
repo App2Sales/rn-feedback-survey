@@ -30,7 +30,44 @@ class Question extends Component {
   }
 
   componentWillMount() {
-    const { survey } = this.props;
+    const { survey } = this.props;  
+    AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
+      if (survey) {
+        const localQuestions = JSON.parse(value);
+        if (localQuestions === undefined || localQuestions === null) {
+          /* If not exists this tag on AsyncStorage, create a new */
+          AsyncStorage.setItem(
+            '@app2sales-feedback-survey',
+            JSON.stringify({
+              survey,
+              questionMap: this.getPreparedQuestions(survey.questions),
+              lastFetch: new Date().getTime(),
+              lastAppearance: new Date().getTime()
+            })
+          );
+        } else {
+          const question = this.getAppearQuestion(localQuestions, 2);
+          if (question !== undefined) {
+            this.setState({
+              visible: true,
+              questionVisibile: true,
+              question,
+              survey
+            });
+          } else {
+            this.setState({ visible: false });
+          }
+          AsyncStorage.setItem(
+            '@app2sales-feedback-survey',
+            JSON.stringify(localQuestions)
+          );
+        }
+      }
+    });
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const { survey } = nextProps;  
     AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
       if (survey) {
         const localQuestions = JSON.parse(value);
