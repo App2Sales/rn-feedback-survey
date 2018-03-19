@@ -30,21 +30,22 @@ class Question extends Component {
   }
 
   componentWillMount() {
-    const { survey } = this.props;  
+    const { onGetSurvey } = this.props;
     AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
-      if (survey) {
+      if (onGetSurvey !== undefined) {
         const localQuestions = JSON.parse(value);
         if (localQuestions === undefined || localQuestions === null) {
-          /* If not exists this tag on AsyncStorage, create a new */
-          AsyncStorage.setItem(
-            '@app2sales-feedback-survey',
-            JSON.stringify({
-              survey,
-              questionMap: this.getPreparedQuestions(survey.questions),
-              lastFetch: new Date().getTime(),
-              lastAppearance: new Date().getTime()
-            })
-          );
+          onGetSurvey().then((response) => {
+            AsyncStorage.setItem(
+              '@app2sales-feedback-survey',
+              JSON.stringify({
+                survey,
+                questionMap: this.getPreparedQuestions(survey.questions),
+                lastFetch: new Date().getTime(),
+                lastAppearance: new Date().getTime()
+              })
+            );
+          });
         } else {
           const question = this.getAppearQuestion(localQuestions, 2);
           if (question !== undefined) {
@@ -67,21 +68,22 @@ class Question extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const { survey } = nextProps;  
+    const { onGetSurvey } = nextProps;
     AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
-      if (survey) {
+      if (onGetSurvey !== undefined) {
         const localQuestions = JSON.parse(value);
         if (localQuestions === undefined || localQuestions === null) {
-          /* If not exists this tag on AsyncStorage, create a new */
-          AsyncStorage.setItem(
-            '@app2sales-feedback-survey',
-            JSON.stringify({
-              survey,
-              questionMap: this.getPreparedQuestions(survey.questions),
-              lastFetch: new Date().getTime(),
-              lastAppearance: new Date().getTime()
-            })
-          );
+          onGetSurvey().then((response) => {
+            AsyncStorage.setItem(
+              '@app2sales-feedback-survey',
+              JSON.stringify({
+                survey,
+                questionMap: this.getPreparedQuestions(survey.questions),
+                lastFetch: new Date().getTime(),
+                lastAppearance: new Date().getTime()
+              })
+            );
+          });
         } else {
           const question = this.getAppearQuestion(localQuestions, 2);
           if (question !== undefined) {
@@ -447,7 +449,7 @@ Question.propTypes = {
     * to make more easy the call on the father class!! */
   title: PropTypes.string,
   onQuestionAnswered: PropTypes.func.isRequired,
-  survey: PropTypes.object.isRequired,
+  onGetSurvey: PropTypes.func.isRequired,
   userInfo: PropTypes.object
 };
 
