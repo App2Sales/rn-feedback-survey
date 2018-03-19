@@ -93,5 +93,8 @@ export default {
     alignSelf: 'center',
     marginBottom: 20,
     marginTop: 25
+  },
+  textIpuntQuestion: {
+    width: '100%'
   }
 };

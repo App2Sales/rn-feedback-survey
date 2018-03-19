@@ -1,12 +1,15 @@
 import React, { Component } from 'react';
-import { Text, View, Image, AsyncStorage, TouchableOpacity } from 'react-native';
+import { Text, View, Linking, Image, Platform, AsyncStorage, TouchableOpacity, TextInput } from 'react-native';
 import { CheckBox } from 'react-native-elements';
 import PropTypes from 'prop-types';
 import Modal from 'react-native-modal';
 import moment from 'moment';
+import deviceInfo from '../deviceInfo';
 import icons from '../../config/icons';
-import feedback from '../../functions/feedback';
 import styles from './styles';
+
+const APPLENATIVE_PREFIX = 'itms-apps://itunes.apple.com/app/id';
+const GOOGLE_PREFIX = 'http://play.google.com/store/apps/details?id=';
 
 class Question extends Component {
   constructor(props) {
@@ -16,17 +19,53 @@ class Question extends Component {
       response: null,
       rating: 0,
       questionVisibile: false,
+      user: {
+        user: props.userInfo ? props.userInfo : null,
+        deviceInfo
+      },
+      survey: null,
       question: null,
       sendStoreConfirmationVisible: false
     };
-    feedback.setProject(this.props.project, this.props.baseUrl);
   }
 
   componentWillMount() {
-    this.willMountQuestions();
+    const { survey } = this.props;
+    AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
+      if (survey) {
+        const localQuestions = JSON.parse(value);
+        if (localQuestions === undefined || localQuestions === null) {
+          /* If not exists this tag on AsyncStorage, create a new */
+          AsyncStorage.setItem(
+            '@app2sales-feedback-survey',
+            JSON.stringify({
+              survey,
+              questionMap: this.getPreparedQuestions(survey.questions),
+              lastFetch: new Date().getTime(),
+              lastAppearance: new Date().getTime()
+            })
+          );
+        } else {
+          const question = this.getAppearQuestion(localQuestions, 2);
+          if (question !== undefined) {
+            this.setState({
+              visible: true,
+              questionVisibile: true,
+              question,
+              survey
+            });
+          } else {
+            this.setState({ visible: false });
+          }
+          AsyncStorage.setItem(
+            '@app2sales-feedback-survey',
+            JSON.stringify(localQuestions)
+          );
+        }
+      }
+    });
   }
 
-  // NEED TO MAKE THE LOGIC FOR USE CHECKBOXES LIKE A RADIOBUTTON
   onPressCheckBox = (response) => {
     const newQuestionWithAlternatives = this.state.question;
     newQuestionWithAlternatives.question.alternatives = this.handleCheckAlternatives(response);
@@ -35,36 +74,74 @@ class Question extends Component {
       question: newQuestionWithAlternatives
     });
   }
+  onchangeTextQuestion = response => this.setState({ response });
 
-  getComponentEvaluationApp = () => {
+  getComponentRatingQuestion = () => {
     const { question } = this.state;
-    const { onQuestionAnswered } = this.props;
-    const submitAction = onQuestionAnswered ? 
-      () => onQuestionAnswered(this.state.question, this.state.response) :
-      () => this.sendReport(this.state.question, this.state.response);
+
     return (
       <View style={styles.whiteBoxContainer}>
         <Text style={styles.title}>{this.props.title}</Text>
         <Text style={styles.question}>{question.question.title}</Text>
         <View style={styles.alternativesEvaluationContainer}>
-          {this.renderEvaluationAlternatives()}
+          {this.renderRatingAlternatives()}
         </View>
-        {this.renderButtons(this.closeModal, submitAction)}
+        {this.renderButtons(this.closeModal, this.ratingSubmitAction)}
       </View>
     );
   }
-  
-  getComponentMultipleChoice = () => {
+
+  getComponentTextQuestion = () => {
+    const {
+      question,
+      response,
+      user,
+      survey
+    } = this.state;
     const { onQuestionAnswered } = this.props;
-    const submitAction = onQuestionAnswered ? 
-      () => onQuestionAnswered(this.state.question, this.state.response) :
-      () => this.sendReport(this.state.question, this.state.response);
+    const textQuestionInputViewStyle = { ...styles.alternativesContainer, padding: 10 };
+    return (
+      <View style={styles.whiteBoxContainer}>
+        <Text style={styles.title}>{this.props.title}</Text>
+        <Text style={styles.question}>{this.state.question.question.title}</Text>
+        <View style={textQuestionInputViewStyle}>
+          <TextInput
+            multiline
+            onChangeText={this.onchangeTextQuestion}
+            style={styles.textIpuntQuestion}
+          />
+        </View>
+        {this.renderButtons(
+          this.closeModal,
+          () => {
+            this.markQuestionAsAnswered();
+            onQuestionAnswered({
+              question,
+              response,
+              user,
+              survey
+            });
+            this.closeModal();
+          }
+        )}
+      </View>);
+  };
+
+
+  getComponentMultipleChoiceQuestion = () => {
+    const {
+      question,
+      response,
+      user,
+      survey
+    } = this.state;
+    const { onQuestionAnswered } = this.props;
     return (
       <View style={styles.whiteBoxContainer}>
         <Text style={styles.title}>{this.props.title}</Text>
         <Text style={styles.question}>{this.state.question.question.title}</Text>
         <View style={styles.alternativesContainer}>
-          {this.state.question.question.alternatives.map(item => (
+          {question.question.alternatives.map(item => (
             <CheckBox
               key={item.index}
               title={item.text}
@@ -76,7 +153,19 @@ class Question extends Component {
               textStyle={styles.alternativeText} />
           ))}
         </View>
-        {this.renderButtons(this.closeModal, submitAction)}
+        {this.renderButtons(
+          this.closeModal,
+          () => {
+            this.markQuestionAsAnswered();
+            onQuestionAnswered({
+              question,
+              response,
+              user,
+              survey
+            });
+            this.closeModal();
+          }
+        )}
       </View>);
   };
 
@@ -85,8 +174,13 @@ class Question extends Component {
       const preparedQuestion = [];
       questions.forEach((item, index) => {
         const question = item;
-        question.alternatives = item.alternatives.map((value, i) =>
-          ({ index: i, text: value, checked: false }));
+        if (item.type === 'multiple-choice' || item.type === 'rating') {
+          if (typeof question.alternatives[0] !== 'object') {
+            question.alternatives =
+              item.alternatives.map((value, i) =>
+                ({ index: i, text: value, checked: false }));
+          }
+        }
         preparedQuestion.push({ index, question, answered: false });
       });
       return preparedQuestion;
@@ -94,10 +188,10 @@ class Question extends Component {
     return [];
   }
 
-  getAppearQuestion = localQuestions => localQuestions.questionMap.find((item) => {
-    // NEED TO CHANGE time stamp on diff to "new Date().getTime()"
+  getAppearQuestion = (localQuestions, delay) => localQuestions.questionMap.find((item) => {
+    // NEED TO CHANGE time stamp on diff to "survey.delay"
     const diff = moment(localQuestions.lastAppearance).diff(1518307200, 'days');
-    return diff >= item.question.delay && !item.answered;
+    return diff >= delay && !item.answered;
   });
 
   getEmoji(item) {
@@ -117,45 +211,56 @@ class Question extends Component {
     }
   }
 
-  willMountQuestions = () => {
-    /*
-      Teremos que mudar aqui para ajustar quando o painel estiver pronto e a estrutura tbm.
-      Lembrar de mudar a estrutura de receber, salvar no banco e mostrar.
-    */
-    /* Get questions from firebase endpoint */
-    feedback.getQuestions().then((serverQuestions) => {
-      /* Handle data localy */
-      AsyncStorage.getItem('@app2sales-feedback-questions').then((value) => {
-        const localQuestions = JSON.parse(value);
-        if (localQuestions === undefined || localQuestions === null) {
-          /* If not exists this tag on AsyncStorage, create a new */
-          AsyncStorage.setItem(
-            '@app2sales-feedback-questions',
-            JSON.stringify({
-              questionMap: this.getPreparedQuestions(serverQuestions),
-              lastFetch: new Date().getTime(),
-              lastAppearance: new Date().getTime()
-            })
-          );
-        } else {
-          // if (this.needUpdate(serverQuestions, localQuestions)) {
-          //   localQuestions.questionMap = this.getPreparedQuestions(serverQuestions);
-          //   localQuestions.lastFetch = new Date().getTime();
-          // }
-          const question = this.getAppearQuestion(localQuestions);
-          if (question !== undefined) {
-            this.setState({ visible: true, questionVisibile: true, question });
-          } else {
-            this.setState({ visible: false });
-          }
-          AsyncStorage.setItem(
-            '@app2sales-feedback-questions',
-            JSON.stringify(localQuestions)
-          );
+  markQuestionAsAnswered = () => {
+    AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
+      const localQuestions = JSON.parse(value);
+      localQuestions.questionMap = localQuestions.questionMap.map((item) => {
+        const newItem = {};
+        Object.assign(newItem, item);
+        if (item.question.key === this.state.question.question.key) {
+          newItem.answered = true;
         }
+        return newItem;
       });
+      AsyncStorage.setItem(
+        '@app2sales-feedback-survey',
+        JSON.stringify(localQuestions)
+      );
     });
   }
+
+  ratingSubmitAction = () => {
+    const {
+      response,
+      user,
+      question,
+      survey
+    } = this.state;
+    const { onQuestionAnswered } = this.props;
+    this.markQuestionAsAnswered();
+    onQuestionAnswered({
+      question,
+      response,
+      user,
+      survey
+    });
+    if ((question.type !== 'rating') && (response >= 4)) {
+      this.setState({ sendStoreConfirmationVisible: true, questionVisibile: false });
+    } else {
+      this.closeModal();
+    }
+  }
+
+  sendToStore = () => {
+    const storeBaseUrl = Platform.OS === 'android' ? GOOGLE_PREFIX : APPLENATIVE_PREFIX;
+    const completeUrl = `${storeBaseUrl}${deviceInfo.bundleId}`;
+    Linking.canOpenURL(completeUrl).then((supported) => {
+      if (supported) {
+        Linking.openURL(completeUrl);
+      }
+    });
+  }
+
 
   needUpdate(remote, localy) {
     /* NEED TO FIX THIS, IS BETTER TO USE ANY ID OF RESEARCh INSTEAD OF CHECK THE IDS OF QUESTION */
@@ -163,41 +268,6 @@ class Question extends Component {
     const remoteIds = remote.map(item => item.id);
     return JSON.stringify(localyIds.sort((a, b) => a > b)) !==
       JSON.stringify(remoteIds.sort((a, b) => a > b));
-  }
-
-  sendReport = (question, response) => {
-    const { onSendAnswer } = this.props;
-    if (onSendAnswer) {
-      onSendAnswer(question, response);
-    } else {
-      if ((response.rating !== undefined) && (response.rating === 5)) {
-        this.setState({ sendStoreConfirmationVisible: true, questionVisibile: false });
-      }
-      feedback.postQuestion(question, response)
-        .then((result) => {
-          if (result.status === 200) {
-            AsyncStorage.getItem('@app2sales-feedback-questions').then((value) => {
-              const localQuestions = JSON.parse(value);
-              localQuestions.questionMap = localQuestions.questionMap.map((item) => {
-                const newItem = {};
-                Object.assign(newItem, item);
-                if (item.index === this.state.question.index) {
-                  newItem.answered = true;
-                }
-                return newItem;
-              });
-              AsyncStorage.setItem(
-                '@app2sales-feedback-questions',
-                JSON.stringify(localQuestions)
-              );
-            });
-          }
-        })
-        .catch((error) => {
-          console.log('Erro: ', error);
-        });
-    }
-    this.closeModal();
   }
 
   handleCheckAlternatives = result => this.state.question.question.alternatives.map(item => ({
@@ -246,10 +316,9 @@ class Question extends Component {
     );
   }
 
-  renderEvaluationAlternatives = () => {
+  renderRatingAlternatives = () => {
     const { question } = this.state;
-    if (question.question.alternativeImageType === undefined ||
-      (question.question.alternativeImageType !== 'star' && question.question.alternativeImageType === 'emoji')) {
+    if (question.question.ratingType !== undefined && question.question.ratingType === 'emoji') {
       return question.question.alternatives.map(item => this.renderEmojis(item));
     }
     return this.renderStars();
@@ -294,7 +363,7 @@ class Question extends Component {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.SubmitBtnTouch}
-            onPress={() => { this.closeModal(); feedback.sendToStore(); }}>
+            onPress={() => { this.closeModal(); this.sendToStore(); }}>
             <Text style={sendTextStyle}>IR A LOJA</Text>
           </TouchableOpacity>
         </View>
@@ -310,9 +379,16 @@ class Question extends Component {
     }
 
     if (question !== null && questionVisibile) {
-      return question.question.evaluation ?
-        this.getComponentEvaluationApp() :
-        this.getComponentMultipleChoice();
+      switch (question.question.type) {
+        case 'multiple-choice':
+          return this.getComponentMultipleChoiceQuestion();
+        case 'text':
+          return this.getComponentTextQuestion();
+        case 'rating':
+          return this.getComponentRatingQuestion();
+        default:
+          return <View />;
+      }
     }
     return <View />;
   }
@@ -333,14 +409,13 @@ Question.propTypes = {
   /* Prop used to render samples of messages
     * to make more easy the call on the father class!! */
   title: PropTypes.string,
-  type: PropTypes.string,
-  onQuestionAnswered: PropTypes.func,
-  onSendAnswer: PropTypes.func
+  onQuestionAnswered: PropTypes.func.isRequired,
+  survey: PropTypes.object.isRequired,
+  userInfo: PropTypes.object
 };
 
 Question.defaultProps = {
-  title: 'Que tal nos dar um feedback?',
-  type: 'questions'
+  title: 'Que tal nos dar um feedback?'
 };
 
 export default Question;
