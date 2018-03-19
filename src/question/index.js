@@ -35,7 +35,7 @@ class Question extends Component {
       if (onGetSurvey !== undefined) {
         const localQuestions = JSON.parse(value);
         if (localQuestions === undefined || localQuestions === null) {
-          onGetSurvey().then((response) => {
+          onGetSurvey((survey) => {
             AsyncStorage.setItem(
               '@app2sales-feedback-survey',
               JSON.stringify({
@@ -53,45 +53,7 @@ class Question extends Component {
               visible: true,
               questionVisibile: true,
               question,
-              survey
-            });
-          } else {
-            this.setState({ visible: false });
-          }
-          AsyncStorage.setItem(
-            '@app2sales-feedback-survey',
-            JSON.stringify(localQuestions)
-          );
-        }
-      }
-    });
-  }
-
-  componentWillReceiveProps(nextProps) {
-    const { onGetSurvey } = nextProps;
-    AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
-      if (onGetSurvey !== undefined) {
-        const localQuestions = JSON.parse(value);
-        if (localQuestions === undefined || localQuestions === null) {
-          onGetSurvey().then((response) => {
-            AsyncStorage.setItem(
-              '@app2sales-feedback-survey',
-              JSON.stringify({
-                survey,
-                questionMap: this.getPreparedQuestions(survey.questions),
-                lastFetch: new Date().getTime(),
-                lastAppearance: new Date().getTime()
-              })
-            );
-          });
-        } else {
-          const question = this.getAppearQuestion(localQuestions, 2);
-          if (question !== undefined) {
-            this.setState({
-              visible: true,
-              questionVisibile: true,
-              question,
-              survey
+              survey: localQuestions.survey
             });
           } else {
             this.setState({ visible: false });
@@ -147,8 +109,7 @@ class Question extends Component {
           <TextInput
             multiline
             onChangeText={this.onchangeTextQuestion}
-            style={styles.textIpuntQuestion}
-          />
+            style={styles.textIpuntQuestion} />
         </View>
         {this.renderButtons(
           this.closeModal,
@@ -450,7 +411,7 @@ Question.propTypes = {
   title: PropTypes.string,
   onQuestionAnswered: PropTypes.func.isRequired,
   onGetSurvey: PropTypes.func.isRequired,
-  userInfo: PropTypes.object
+  userInfo: PropTypes.oneOfType([PropTypes.func, PropTypes.object])
 };
 
 Question.defaultProps = {
