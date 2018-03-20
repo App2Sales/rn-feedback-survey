@@ -21,7 +21,8 @@ class Question extends Component {
       questionVisibile: false,
       user: {
         user: props.userInfo ? props.userInfo : null,
-        deviceInfo
+        deviceInfo,
+        uniqueID: deviceInfo.uniqueID
       },
       survey: null,
       question: null,
