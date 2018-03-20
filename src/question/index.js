@@ -72,6 +72,7 @@ class Question extends Component {
     newQuestionWithAlternatives.question.alternatives = this.handleCheckAlternatives(response);
     this.setState({
       response,
+      rating: response,
       question: newQuestionWithAlternatives
     });
   }
@@ -114,13 +115,12 @@ class Question extends Component {
         {this.renderButtons(
           this.closeModal,
           () => {
-            this.markQuestionAsAnswered();
             onQuestionAnswered({
               question,
               response,
               user,
               survey
-            });
+            }, this.markQuestionAsAnswered());
             this.closeModal();
           }
         )}
@@ -156,13 +156,12 @@ class Question extends Component {
         {this.renderButtons(
           this.closeModal,
           () => {
-            this.markQuestionAsAnswered();
             onQuestionAnswered({
               question,
               response,
               user,
               survey
-            });
+            }, this.markQuestionAsAnswered());
             this.closeModal();
           }
         )}
@@ -236,14 +235,13 @@ class Question extends Component {
       question,
       survey
     } = this.state;
-    const { onQuestionAnswered } = this.props;
-    this.markQuestionAsAnswered();
+    const { onQuestionAnswered } = this.props;    
     onQuestionAnswered({
       question,
       response,
       user,
       survey
-    });
+    }, this.markQuestionAsAnswered());
     if ((question.type !== 'rating') && (response >= 4)) {
       this.setState({ sendStoreConfirmationVisible: true, questionVisibile: false });
     } else {
