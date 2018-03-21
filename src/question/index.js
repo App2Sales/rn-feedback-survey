@@ -190,7 +190,7 @@ class Question extends Component {
 
   getAppearQuestion = (localQuestions, delay) => localQuestions.questionMap.find((item) => {
     // NEED TO CHANGE time stamp on diff to "survey.delay"
-    const diff = moment(localQuestions.lastAppearance).diff(1518307200, 'days');
+    const diff = moment(localQuestions.lastAppearance).diff(new Date().getTime(), 'days');
     return diff >= delay && !item.answered;
   });
 
