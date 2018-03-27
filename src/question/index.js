@@ -1,9 +1,16 @@
 import React, { Component } from 'react';
-import { Text, View, Linking, Image, Platform, AsyncStorage, TouchableOpacity, TextInput } from 'react-native';
+import { Text, View, Linking, Image, Platform, AsyncStorage, TouchableOpacity } from 'react-native';
 import { CheckBox } from 'react-native-elements';
 import PropTypes from 'prop-types';
 import Modal from 'react-native-modal';
 import moment from 'moment';
+import Reactotron from 'reactotron-react-native';
+
+import {
+  RatingQuestionComponent,
+  MultipleChoiceQuestionComponent,
+  TextQuestionComponent
+} from '../components';
 import deviceInfo from '../deviceInfo';
 import icons from '../../config/icons';
 import styles from './styles';
@@ -31,41 +38,30 @@ class Question extends Component {
   }
 
   componentWillMount() {
-    const { onGetSurvey } = this.props;
-    AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
-      if (onGetSurvey !== undefined) {
-        const localQuestions = JSON.parse(value);
-        if (localQuestions === undefined || localQuestions === null) {
-          onGetSurvey((survey) => {
-            AsyncStorage.setItem(
-              '@app2sales-feedback-survey',
-              JSON.stringify({
+    const { onGetSurvey, enableSurvey } = this.props;
+    if (enableSurvey) {
+      Reactotron.log('ENABLED');
+      AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
+        if (onGetSurvey !== undefined) {
+          const localQuestions = JSON.parse(value);
+          if (localQuestions === undefined ||
+            localQuestions === null ||
+            !localQuestions.survey.survey.enable) {
+            onGetSurvey((survey) => {
+              const LQToSave = {
                 survey,
                 questionMap: this.getPreparedQuestions(survey.questions),
                 lastFetch: new Date().getTime(),
                 lastAppearance: new Date().getTime()
-              })
-            );
-          });
-        } else {
-          const question = this.getAppearQuestion(localQuestions, 2);
-          if (question !== undefined) {
-            this.setState({
-              visible: true,
-              questionVisibile: true,
-              question,
-              survey: localQuestions.survey
+              };
+              this.handleAppearQuestion(LQToSave);
             });
           } else {
-            this.setState({ visible: false });
+            this.handleAppearQuestion(localQuestions);
           }
-          AsyncStorage.setItem(
-            '@app2sales-feedback-survey',
-            JSON.stringify(localQuestions)
-          );
         }
-      }
-    });
+      });
+    }
   }
 
   onPressCheckBox = (response) => {
@@ -78,96 +74,6 @@ class Question extends Component {
     });
   }
   onchangeTextQuestion = response => this.setState({ response });
-
-  getComponentRatingQuestion = () => {
-    const { question } = this.state;
-
-    return (
-      <View style={styles.whiteBoxContainer}>
-        <Text style={styles.title}>{this.props.title}</Text>
-        <Text style={styles.question}>{question.question.title}</Text>
-        <View style={styles.alternativesEvaluationContainer}>
-          {this.renderRatingAlternatives()}
-        </View>
-        {this.renderButtons(this.closeModal, this.ratingSubmitAction)}
-      </View>
-    );
-  }
-
-  getComponentTextQuestion = () => {
-    const {
-      question,
-      response,
-      user,
-      survey
-    } = this.state;
-    const { onQuestionAnswered } = this.props;
-    const textQuestionInputViewStyle = { ...styles.alternativesContainer, padding: 10 };
-    return (
-      <View style={styles.whiteBoxContainer}>
-        <Text style={styles.title}>{this.props.title}</Text>
-        <Text style={styles.question}>{this.state.question.question.title}</Text>
-        <View style={textQuestionInputViewStyle}>
-          <TextInput
-            multiline
-            onChangeText={this.onchangeTextQuestion}
-            style={styles.textIpuntQuestion} />
-        </View>
-        {this.renderButtons(
-          this.closeModal,
-          () => {
-            onQuestionAnswered({
-              question,
-              response,
-              user,
-              survey
-            }, this.markQuestionAsAnswered());
-            this.closeModal();
-          }
-        )}
-      </View>);
-  };
-
-
-  getComponentMultipleChoiceQuestion = () => {
-    const {
-      question,
-      response,
-      user,
-      survey
-    } = this.state;
-    const { onQuestionAnswered } = this.props;
-    return (
-      <View style={styles.whiteBoxContainer}>
-        <Text style={styles.title}>{this.props.title}</Text>
-        <Text style={styles.question}>{this.state.question.question.title}</Text>
-        <View style={styles.alternativesContainer}>
-          {question.question.alternatives.map(item => (
-            <CheckBox
-              key={item.index}
-              title={item.text}
-              onPress={() => this.onPressCheckBox(item)}
-              checkedIcon={'dot-circle-o'}
-              uncheckedIcon={'circle-o'}
-              checked={item.checked}
-              containerStyle={styles.alternativeView}
-              textStyle={styles.alternativeText} />
-          ))}
-        </View>
-        {this.renderButtons(
-          this.closeModal,
-          () => {
-            onQuestionAnswered({
-              question,
-              response,
-              user,
-              survey
-            }, this.markQuestionAsAnswered());
-            this.closeModal();
-          }
-        )}
-      </View>);
-  };
 
   getPreparedQuestions(questions) {
     if (questions.length > 0) {
@@ -190,7 +96,8 @@ class Question extends Component {
 
   getAppearQuestion = (localQuestions, delay) => localQuestions.questionMap.find((item) => {
     // NEED TO CHANGE time stamp on diff to "survey.delay"
-    const diff = moment(localQuestions.lastAppearance).diff(new Date().getTime(), 'days');
+    const diff = moment(localQuestions.lastAppearance).diff(1518307200, 'days');
+    Reactotron.log(`Diferença das questions > ${diff}`);
     return diff >= delay && !item.answered;
   });
 
@@ -211,6 +118,26 @@ class Question extends Component {
     }
   }
 
+  handleAppearQuestion = (localQuestions) => {
+    Reactotron.log(localQuestions);
+    const question = this.getAppearQuestion(localQuestions, 2);
+    Reactotron.log(question);
+    if (question !== undefined) {
+      this.setState({
+        visible: true,
+        questionVisibile: true,
+        question,
+        survey: localQuestions.survey
+      });
+    } else {
+      this.setState({ visible: false });
+    }
+    AsyncStorage.setItem(
+      '@app2sales-feedback-survey',
+      JSON.stringify(localQuestions)
+    );
+  }
+
   markQuestionAsAnswered = () => {
     AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
       const localQuestions = JSON.parse(value);
@@ -229,23 +156,33 @@ class Question extends Component {
     });
   }
 
-  ratingSubmitAction = () => {
+  ratingResponse = (wasStore) => {
     const {
       response,
       user,
       question,
       survey
     } = this.state;
-    const { onQuestionAnswered } = this.props;    
-    onQuestionAnswered({
+    const resp = {};
+    Object.assign(resp, response);
+    this.props.onQuestionAnswered({
       question,
-      response,
+      // Tracke if the user was to Store
+      response: { ...resp, wasStore },
       user,
       survey
     }, this.markQuestionAsAnswered());
+  }
+
+  ratingSubmitAction = () => {
+    const {
+      response,
+      question
+    } = this.state;
     if ((question.type !== 'rating') && (response >= 4)) {
       this.setState({ sendStoreConfirmationVisible: true, questionVisibile: false });
     } else {
+      this.ratingResponse(false);
       this.closeModal();
     }
   }
@@ -258,15 +195,7 @@ class Question extends Component {
         Linking.openURL(completeUrl);
       }
     });
-  }
-
-
-  needUpdate(remote, localy) {
-    /* NEED TO FIX THIS, IS BETTER TO USE ANY ID OF RESEARCh INSTEAD OF CHECK THE IDS OF QUESTION */
-    const localyIds = localy.questionMap.map(item => item.id);
-    const remoteIds = remote.map(item => item.id);
-    return JSON.stringify(localyIds.sort((a, b) => a > b)) !==
-      JSON.stringify(remoteIds.sort((a, b) => a > b));
+    this.ratingResponse(true);
   }
 
   handleCheckAlternatives = result => this.state.question.question.alternatives.map(item => ({
@@ -277,6 +206,19 @@ class Question extends Component {
   handleMarkStars = amount => this.setState({ rating: amount, response: amount })
 
   closeModal = () => this.setState({ visible: false });
+
+
+  multipleChoiceAlternatives = () => this.state.question.question.alternatives.map(item => (
+    <CheckBox
+      key={item.index}
+      title={item.text}
+      onPress={() => this.onPressCheckBox(item)}
+      checkedIcon={'dot-circle-o'}
+      uncheckedIcon={'circle-o'}
+      checked={item.checked}
+      containerStyle={styles.alternativeView}
+      textStyle={styles.alternativeText} />
+  ))
 
   renderStars = () => {
     const stars = [1, 2, 3, 4, 5].map((num) => {
@@ -370,6 +312,28 @@ class Question extends Component {
     );
   }
 
+  renderButtonsForComponents = () => {
+    const {
+      question,
+      response,
+      user,
+      survey
+    } = this.state;
+    const { onQuestionAnswered } = this.state;
+    return this.renderButtons(
+      this.closeModal,
+      () => {
+        onQuestionAnswered({
+          question,
+          response,
+          user,
+          survey
+        }, this.markQuestionAsAnswered());
+        this.closeModal();
+      }
+    );
+  }
+
   renderContent = () => {
     const { question, sendStoreConfirmationVisible, questionVisibile } = this.state;
 
@@ -380,11 +344,33 @@ class Question extends Component {
     if (question !== null && questionVisibile) {
       switch (question.question.type) {
         case 'multiple-choice':
-          return this.getComponentMultipleChoiceQuestion();
+          // return this.getComponentMultipleChoiceQuestion();
+          return (
+            <MultipleChoiceQuestionComponent
+              title={this.props.title}
+              questionTitle={this.state.question.question.title}
+              renderButtons={this.renderButtonsForComponents()}
+              alternatives={this.multipleChoiceAlternatives()} />
+          );
         case 'text':
-          return this.getComponentTextQuestion();
+          // return this.getComponentTextQuestion();
+          return (
+            <TextQuestionComponent
+              title={this.props.title}
+              questionTitle={this.state.question.question.title}
+              renderButtons={this.renderButtonsForComponents()}
+              onchangeTextQuestion={this.onchangeTextQuestion} />);
         case 'rating':
-          return this.getComponentRatingQuestion();
+          // return this.getComponentRatingQuestion();
+          return (
+            <RatingQuestionComponent
+              title={this.props.title}
+              questionTitle={this.state.question.question.title}
+              renderButtons={
+                this.renderButtons(this.closeModal, this.ratingSubmitAction)
+              }
+              renderRatingAlternatives={this.renderRatingAlternatives()} />
+          );
         default:
           return <View />;
       }
@@ -410,7 +396,8 @@ Question.propTypes = {
   title: PropTypes.string,
   onQuestionAnswered: PropTypes.func.isRequired,
   onGetSurvey: PropTypes.func.isRequired,
-  userInfo: PropTypes.oneOfType([PropTypes.func, PropTypes.object])
+  userInfo: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
+  enableSurvey: PropTypes.bool
 };
 
 Question.defaultProps = {
