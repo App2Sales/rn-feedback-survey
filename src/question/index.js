@@ -40,6 +40,10 @@ class Question extends Component {
   componentWillMount() {
     const { onGetSurvey, enableSurvey } = this.props;
     if (enableSurvey) {
+<<<<<<< HEAD
+=======
+      Reactotron.log('ENABLED');
+>>>>>>> 751ec455ee24cf97395b8b4b697903dacb6e9e5b
       AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
         if (onGetSurvey !== undefined) {
           const localQuestions = JSON.parse(value);
@@ -96,6 +100,10 @@ class Question extends Component {
   getAppearQuestion = (localQuestions, delay) => localQuestions.questionMap.find((item) => {
     // NEED TO CHANGE time stamp on diff to "survey.delay"
     const diff = moment(localQuestions.lastAppearance).diff(1518307200, 'days');
+<<<<<<< HEAD
+=======
+    Reactotron.log(`Diferença das questions > ${diff}`);
+>>>>>>> 751ec455ee24cf97395b8b4b697903dacb6e9e5b
     return diff >= delay && !item.answered;
   });
 
@@ -117,7 +125,13 @@ class Question extends Component {
   }
 
   handleAppearQuestion = (localQuestions) => {
+<<<<<<< HEAD
     const question = this.getAppearQuestion(localQuestions, 2);
+=======
+    Reactotron.log(localQuestions);
+    const question = this.getAppearQuestion(localQuestions, 2);
+    Reactotron.log(question);
+>>>>>>> 751ec455ee24cf97395b8b4b697903dacb6e9e5b
     if (question !== undefined) {
       this.setState({
         visible: true,
