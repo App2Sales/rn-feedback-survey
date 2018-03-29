@@ -4,13 +4,14 @@ import { CheckBox } from 'react-native-elements';
 import PropTypes from 'prop-types';
 import Modal from 'react-native-modal';
 import moment from 'moment';
-import Reactotron from 'reactotron-react-native';
+
 
 import {
   RatingQuestionComponent,
   MultipleChoiceQuestionComponent,
   TextQuestionComponent
 } from '../components';
+import { Questions } from '../../functions';
 import deviceInfo from '../deviceInfo';
 import icons from '../../config/icons';
 import styles from './styles';
@@ -27,7 +28,7 @@ class Question extends Component {
       rating: 0,
       questionVisibile: false,
       user: {
-        user: props.userInfo ? props.userInfo : null,
+        userInfo: props.userInfo ? props.userInfo : null,
         deviceInfo,
         uniqueID: deviceInfo.uniqueID
       },
@@ -35,36 +36,11 @@ class Question extends Component {
       question: null,
       sendStoreConfirmationVisible: false
     };
+    this.questionUtils = new Questions(props.baseUrl, props.project);
   }
 
   componentWillMount() {
-    const { onGetSurvey, enableSurvey } = this.props;
-    if (enableSurvey) {
-<<<<<<< HEAD
-=======
-      Reactotron.log('ENABLED');
->>>>>>> 751ec455ee24cf97395b8b4b697903dacb6e9e5b
-      AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
-        if (onGetSurvey !== undefined) {
-          const localQuestions = JSON.parse(value);
-          if (localQuestions === undefined ||
-            localQuestions === null ||
-            !localQuestions.survey.survey.enable) {
-            onGetSurvey((survey) => {
-              const LQToSave = {
-                survey,
-                questionMap: this.getPreparedQuestions(survey.questions),
-                lastFetch: new Date().getTime(),
-                lastAppearance: new Date().getTime()
-              };
-              this.handleAppearQuestion(LQToSave);
-            });
-          } else {
-            this.handleAppearQuestion(localQuestions);
-          }
-        }
-      });
-    }
+    this.questionUtils.configSurvey(this.configure);
   }
 
   onPressCheckBox = (response) => {
@@ -76,6 +52,7 @@ class Question extends Component {
       question: newQuestionWithAlternatives
     });
   }
+
   onchangeTextQuestion = response => this.setState({ response });
 
   getPreparedQuestions(questions) {
@@ -100,10 +77,6 @@ class Question extends Component {
   getAppearQuestion = (localQuestions, delay) => localQuestions.questionMap.find((item) => {
     // NEED TO CHANGE time stamp on diff to "survey.delay"
     const diff = moment(localQuestions.lastAppearance).diff(1518307200, 'days');
-<<<<<<< HEAD
-=======
-    Reactotron.log(`Diferença das questions > ${diff}`);
->>>>>>> 751ec455ee24cf97395b8b4b697903dacb6e9e5b
     return diff >= delay && !item.answered;
   });
 
@@ -125,13 +98,7 @@ class Question extends Component {
   }
 
   handleAppearQuestion = (localQuestions) => {
-<<<<<<< HEAD
     const question = this.getAppearQuestion(localQuestions, 2);
-=======
-    Reactotron.log(localQuestions);
-    const question = this.getAppearQuestion(localQuestions, 2);
-    Reactotron.log(question);
->>>>>>> 751ec455ee24cf97395b8b4b697903dacb6e9e5b
     if (question !== undefined) {
       this.setState({
         visible: true,
@@ -173,10 +140,16 @@ class Question extends Component {
       question,
       survey
     } = this.state;
-    this.props.onQuestionAnswered({
+    const preparedResponse = {
+      response,
+      username: user.userInfo.name ? user.userInfo.name : 'Anônimo'  ,
+      so: Platform.OS,
+      timestamp: new Date().getTime(),
+      wasStore 
+    };
+    this.questionUtils.onQuestionAnswered({
       question,
-      // Tracke if the user was to Store
-      response: { response, wasStore },
+      response:preparedResponse ,
       user,
       survey
     }, this.markQuestionAsAnswered());
@@ -227,6 +200,25 @@ class Question extends Component {
       containerStyle={styles.alternativeView}
       textStyle={styles.alternativeText} />
   ))
+
+  configure = (survey) => {
+    AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
+      const localQuestions = JSON.parse(value);
+      if (localQuestions === undefined ||
+        localQuestions === null ||
+        !localQuestions.survey.survey.enable) {
+        const LQToSave = {
+          survey,
+          questionMap: this.getPreparedQuestions(survey.questions),
+          lastFetch: new Date().getTime(),
+          lastAppearance: new Date().getTime()
+        };
+        this.handleAppearQuestion(LQToSave);
+      } else {
+        this.handleAppearQuestion(localQuestions);
+      }
+    });
+  }
 
   renderStars = () => {
     const stars = [1, 2, 3, 4, 5].map((num) => {
@@ -327,11 +319,10 @@ class Question extends Component {
       user,
       survey
     } = this.state;
-    const { onQuestionAnswered } = this.state;
     return this.renderButtons(
       this.closeModal,
       () => {
-        onQuestionAnswered({
+        this.questionUtils.onQuestionAnswered({
           question,
           response,
           user,
@@ -402,10 +393,9 @@ Question.propTypes = {
   /* Prop used to render samples of messages
     * to make more easy the call on the father class!! */
   title: PropTypes.string,
-  onQuestionAnswered: PropTypes.func.isRequired,
-  onGetSurvey: PropTypes.func.isRequired,
   userInfo: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  enableSurvey: PropTypes.bool
+  baseUrl: PropTypes.string,
+  project: PropTypes.string
 };
 
 Question.defaultProps = {
