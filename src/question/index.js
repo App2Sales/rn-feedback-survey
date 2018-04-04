@@ -15,6 +15,7 @@ import { Questions } from '../../functions';
 import deviceInfo from '../deviceInfo';
 import icons from '../../config/icons';
 import styles from './styles';
+import Reactotron from 'reactotron-react-native';
 
 const APPLENATIVE_PREFIX = 'itms-apps://itunes.apple.com/app/id';
 const GOOGLE_PREFIX = 'http://play.google.com/store/apps/details?id=';
@@ -43,12 +44,18 @@ class Question extends Component {
     this.questionUtils.configSurvey(this.configure);
   }
 
-  onPressCheckBox = (response) => {
+  componentWillReceiveProps(nextProps) {
+    const updatedUser = this.state.user;
+    updatedUser.userInfo = nextProps.userInfo;
+    this.setState({ user: updatedUser });
+  }
+
+  onPressCheckBox = (response, ratingNumber = null) => {
     const newQuestionWithAlternatives = this.state.question;
     newQuestionWithAlternatives.question.alternatives = this.handleCheckAlternatives(response);
     this.setState({
       response,
-      rating: response,
+      rating: ratingNumber !== null ? ratingNumber : response,
       question: newQuestionWithAlternatives
     });
   }
@@ -97,6 +104,33 @@ class Question extends Component {
     }
   }
 
+  getPreparedResponse = (user, response, wasStore = null) => {
+    const { email, name } = user.userInfo;
+    let username = 'Anônimo';
+    if (email) {
+      username = email;
+    } else if (name) {
+      username = name;
+    }
+
+    if (wasStore !== null) {
+      return ({
+        response,
+        username,
+        so: Platform.OS,
+        timestamp: new Date().getTime(),
+        wasStore
+      });
+    }
+
+    return ({
+      response,
+      username,
+      so: Platform.OS,
+      timestamp: new Date().getTime()
+    });
+  }
+
   handleAppearQuestion = (localQuestions) => {
     const question = this.getAppearQuestion(localQuestions, 2);
     if (question !== undefined) {
@@ -140,16 +174,10 @@ class Question extends Component {
       question,
       survey
     } = this.state;
-    const preparedResponse = {
-      response,
-      username: user.userInfo.name ? user.userInfo.name : 'Anônimo',
-      so: Platform.OS,
-      timestamp: new Date().getTime(),
-      wasStore
-    };
+
     this.questionUtils.onQuestionAnswered({
       question,
-      response: preparedResponse,
+      response: this.getPreparedResponse(user, response, wasStore),
       user,
       survey
     }, this.markQuestionAsAnswered());
@@ -213,10 +241,10 @@ class Question extends Component {
       };
 
       if (!localSurvey) {
+        Reactotron.log('INICIAL >>>>>>');
         this.handleAppearQuestion(newSurveyToSave);
         return;
       }
-
       this.mergeSurvey(localSurvey, newSurveyToSave);
     });
   }
@@ -233,13 +261,12 @@ class Question extends Component {
             .find(localQuestionItem =>
               ((serverQuestionItem.question.key === localQuestionItem.question.key) ||
                 (serverQuestionItem.question.title === localQuestionItem.question.title)));
-
           if (qt) return qt;
 
           return serverQuestionItem;
         });
-
-    return newSurvey;
+    // Handle here
+    this.handleAppearQuestion(newSurvey);
   }
 
   renderStars = () => {
@@ -270,7 +297,7 @@ class Question extends Component {
     return (
       <TouchableOpacity
         key={item.index}
-        onPress={() => this.onPressCheckBox(item)}
+        onPress={() => this.onPressCheckBox(item, item.text)}
         style={styles.touchableEvaluationAlternative}>
         <Image
           style={imgStyle}
@@ -341,12 +368,13 @@ class Question extends Component {
       user,
       survey
     } = this.state;
+
     return this.renderButtons(
       this.closeModal,
       () => {
         this.questionUtils.onQuestionAnswered({
           question,
-          response,
+          response: this.getPreparedResponse(user, response),
           user,
           survey
         }, this.markQuestionAsAnswered());
