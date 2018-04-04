@@ -4,13 +4,14 @@ import { CheckBox } from 'react-native-elements';
 import PropTypes from 'prop-types';
 import Modal from 'react-native-modal';
 import moment from 'moment';
-import Reactotron from 'reactotron-react-native';
+
 
 import {
   RatingQuestionComponent,
   MultipleChoiceQuestionComponent,
   TextQuestionComponent
 } from '../components';
+import { Questions } from '../../functions';
 import deviceInfo from '../deviceInfo';
 import icons from '../../config/icons';
 import styles from './styles';
@@ -27,7 +28,7 @@ class Question extends Component {
       rating: 0,
       questionVisibile: false,
       user: {
-        user: props.userInfo ? props.userInfo : null,
+        userInfo: props.userInfo ? props.userInfo : null,
         deviceInfo,
         uniqueID: deviceInfo.uniqueID
       },
@@ -35,44 +36,29 @@ class Question extends Component {
       question: null,
       sendStoreConfirmationVisible: false
     };
+    this.questionUtils = new Questions(props.baseUrl, props.project);
   }
 
   componentWillMount() {
-    const { onGetSurvey, enableSurvey } = this.props;
-    if (enableSurvey) {
-      Reactotron.log('ENABLED');
-      AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
-        if (onGetSurvey !== undefined) {
-          const localQuestions = JSON.parse(value);
-          if (localQuestions === undefined ||
-            localQuestions === null ||
-            !localQuestions.survey.survey.enable) {
-            onGetSurvey((survey) => {
-              const LQToSave = {
-                survey,
-                questionMap: this.getPreparedQuestions(survey.questions),
-                lastFetch: new Date().getTime(),
-                lastAppearance: new Date().getTime()
-              };
-              this.handleAppearQuestion(LQToSave);
-            });
-          } else {
-            this.handleAppearQuestion(localQuestions);
-          }
-        }
-      });
-    }
+    this.questionUtils.configSurvey(this.configure);
   }
 
-  onPressCheckBox = (response) => {
+  componentWillReceiveProps(nextProps) {
+    const updatedUser = this.state.user;
+    updatedUser.userInfo = nextProps.userInfo;
+    this.setState({ user: updatedUser });
+  }
+
+  onPressCheckBox = (response, ratingNumber = null) => {
     const newQuestionWithAlternatives = this.state.question;
     newQuestionWithAlternatives.question.alternatives = this.handleCheckAlternatives(response);
     this.setState({
       response,
-      rating: response,
+      rating: ratingNumber !== null ? ratingNumber : response,
       question: newQuestionWithAlternatives
     });
   }
+
   onchangeTextQuestion = response => this.setState({ response });
 
   getPreparedQuestions(questions) {
@@ -97,7 +83,6 @@ class Question extends Component {
   getAppearQuestion = (localQuestions, delay) => localQuestions.questionMap.find((item) => {
     // NEED TO CHANGE time stamp on diff to "survey.delay"
     const diff = moment(localQuestions.lastAppearance).diff(1518307200, 'days');
-    Reactotron.log(`Diferença das questions > ${diff}`);
     return diff >= delay && !item.answered;
   });
 
@@ -118,10 +103,35 @@ class Question extends Component {
     }
   }
 
+  getPreparedResponse = (user, response, wasStore = null) => {
+    const { email, name } = user.userInfo;
+    let username = 'Anônimo';
+    if (email) {
+      username = email;
+    } else if (name) {
+      username = name;
+    }
+
+    if (wasStore !== null) {
+      return ({
+        response,
+        username,
+        so: Platform.OS,
+        timestamp: new Date().getTime(),
+        wasStore
+      });
+    }
+
+    return ({
+      response,
+      username,
+      so: Platform.OS,
+      timestamp: new Date().getTime()
+    });
+  }
+
   handleAppearQuestion = (localQuestions) => {
-    Reactotron.log(localQuestions);
     const question = this.getAppearQuestion(localQuestions, 2);
-    Reactotron.log(question);
     if (question !== undefined) {
       this.setState({
         visible: true,
@@ -163,12 +173,10 @@ class Question extends Component {
       question,
       survey
     } = this.state;
-    const resp = {};
-    Object.assign(resp, response);
-    this.props.onQuestionAnswered({
+
+    this.questionUtils.onQuestionAnswered({
       question,
-      // Tracke if the user was to Store
-      response: { ...resp, wasStore },
+      response: this.getPreparedResponse(user, response, wasStore),
       user,
       survey
     }, this.markQuestionAsAnswered());
@@ -220,6 +228,45 @@ class Question extends Component {
       textStyle={styles.alternativeText} />
   ))
 
+  configure = (serverSurvey) => {
+    AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
+      const localSurvey = JSON.parse(value);
+
+      const newSurveyToSave = {
+        survey: serverSurvey,
+        questionMap: this.getPreparedQuestions(serverSurvey.questions),
+        lastFetch: new Date().getTime(),
+        lastAppearance: new Date().getTime()
+      };
+
+      if (!localSurvey) {
+        this.handleAppearQuestion(newSurveyToSave);
+        return;
+      }
+      this.mergeSurvey(localSurvey, newSurveyToSave);
+    });
+  }
+
+  mergeSurvey = (localSurvey, serverPreparedSurvey) => {
+    const newSurvey = {};
+    Object.assign(newSurvey, serverPreparedSurvey);
+    newSurvey.questionMap =
+      serverPreparedSurvey
+        .questionMap
+        .map((serverQuestionItem) => {
+          const qt = localSurvey
+            .questionMap
+            .find(localQuestionItem =>
+              ((serverQuestionItem.question.key === localQuestionItem.question.key) ||
+                (serverQuestionItem.question.title === localQuestionItem.question.title)));
+          if (qt) return qt;
+
+          return serverQuestionItem;
+        });
+    // Handle here
+    this.handleAppearQuestion(newSurvey);
+  }
+
   renderStars = () => {
     const stars = [1, 2, 3, 4, 5].map((num) => {
       const starStyle = {
@@ -248,7 +295,7 @@ class Question extends Component {
     return (
       <TouchableOpacity
         key={item.index}
-        onPress={() => this.onPressCheckBox(item)}
+        onPress={() => this.onPressCheckBox(item, item.text)}
         style={styles.touchableEvaluationAlternative}>
         <Image
           style={imgStyle}
@@ -319,13 +366,13 @@ class Question extends Component {
       user,
       survey
     } = this.state;
-    const { onQuestionAnswered } = this.state;
+
     return this.renderButtons(
       this.closeModal,
       () => {
-        onQuestionAnswered({
+        this.questionUtils.onQuestionAnswered({
           question,
-          response,
+          response: this.getPreparedResponse(user, response),
           user,
           survey
         }, this.markQuestionAsAnswered());
@@ -394,10 +441,9 @@ Question.propTypes = {
   /* Prop used to render samples of messages
     * to make more easy the call on the father class!! */
   title: PropTypes.string,
-  onQuestionAnswered: PropTypes.func.isRequired,
-  onGetSurvey: PropTypes.func.isRequired,
   userInfo: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  enableSurvey: PropTypes.bool
+  baseUrl: PropTypes.string,
+  project: PropTypes.string
 };
 
 Question.defaultProps = {
