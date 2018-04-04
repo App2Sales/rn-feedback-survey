@@ -145,11 +145,11 @@ class Question extends Component {
       username: user.userInfo.name ? user.userInfo.name : 'Anônimo'  ,
       so: Platform.OS,
       timestamp: new Date().getTime(),
-      wasStore 
+      wasStore
     };
     this.questionUtils.onQuestionAnswered({
       question,
-      response:preparedResponse ,
+      response: preparedResponse,
       user,
       survey
     }, this.markQuestionAsAnswered());
@@ -201,23 +201,45 @@ class Question extends Component {
       textStyle={styles.alternativeText} />
   ))
 
-  configure = (survey) => {
+  configure = (serverSurvey) => {
     AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
-      const localQuestions = JSON.parse(value);
-      if (localQuestions === undefined ||
-        localQuestions === null ||
-        !localQuestions.survey.survey.enable) {
-        const LQToSave = {
-          survey,
-          questionMap: this.getPreparedQuestions(survey.questions),
-          lastFetch: new Date().getTime(),
-          lastAppearance: new Date().getTime()
-        };
-        this.handleAppearQuestion(LQToSave);
-      } else {
-        this.handleAppearQuestion(localQuestions);
+      const localSurvey = JSON.parse(value);
+
+      const newSurveyToSave = {
+        survey: serverSurvey,
+        questionMap: this.getPreparedQuestions(serverSurvey.questions),
+        lastFetch: new Date().getTime(),
+        lastAppearance: new Date().getTime()
+      };
+
+      if (!localSurvey) {
+        this.handleAppearQuestion(newSurveyToSave);
+        return;
       }
+
+      this.mergeSurvey(localSurvey, newSurveyToSave);
     });
+  }
+
+  mergeSurvey = (localSurvey, serverPreparedSurvey) => {
+    const newSurvey = {};
+    Object.assign(newSurvey, serverPreparedSurvey);
+    newSurvey.questionMap =
+      serverPreparedSurvey
+        .questionMap
+        .map((serverQuestionItem) => {
+          const qt = localSurvey
+            .questionMap
+            .find(localQuestionItem =>
+              ((serverQuestionItem.question.key === localQuestionItem.question.key) ||
+                (serverQuestionItem.question.title === localQuestionItem.question.title)));
+
+          if (qt) return qt;
+
+          return serverQuestionItem;
+        });
+
+    return newSurvey;
   }
 
   renderStars = () => {
