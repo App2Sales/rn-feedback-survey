@@ -15,6 +15,7 @@ import { Questions } from '../../functions';
 import deviceInfo from '../deviceInfo';
 import icons from '../../config/icons';
 import styles from './styles';
+import Reactotron from 'reactotron-react-native';
 
 const APPLENATIVE_PREFIX = 'itms-apps://itunes.apple.com/app/id';
 const GOOGLE_PREFIX = 'http://play.google.com/store/apps/details?id=';
