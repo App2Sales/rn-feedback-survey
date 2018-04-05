@@ -1,5 +1,14 @@
 import React, { Component } from 'react';
-import { Text, View, Linking, Image, Platform, AsyncStorage, TouchableOpacity } from 'react-native';
+import {
+  Text,
+  View,
+  Image,
+  NetInfo,
+  Linking,
+  Platform,
+  AsyncStorage,
+  TouchableOpacity
+} from 'react-native';
 import { CheckBox } from 'react-native-elements';
 import PropTypes from 'prop-types';
 import Modal from 'react-native-modal';
@@ -11,7 +20,7 @@ import {
   MultipleChoiceQuestionComponent,
   TextQuestionComponent
 } from '../components';
-import { Questions } from '../../functions';
+import { Questions } from '../functions';
 import deviceInfo from '../deviceInfo';
 import icons from '../../config/icons';
 import styles from './styles';
@@ -41,6 +50,7 @@ class Question extends Component {
 
   componentWillMount() {
     this.questionUtils.configSurvey(this.configure);
+    this.questionUtils.persistAnsweredsWithouNetwork();
   }
 
   componentWillReceiveProps(nextProps) {
@@ -54,6 +64,7 @@ class Question extends Component {
     newQuestionWithAlternatives.question.alternatives = this.handleCheckAlternatives(response);
     this.setState({
       response,
+
       rating: ratingNumber !== null ? ratingNumber : response,
       question: newQuestionWithAlternatives
     });
@@ -104,12 +115,15 @@ class Question extends Component {
   }
 
   getPreparedResponse = (user, response, wasStore = null) => {
-    const { email, name } = user.userInfo;
+    const { userInfo } = user;
     let username = 'Anônimo';
-    if (email) {
-      username = email;
-    } else if (name) {
-      username = name;
+    if (userInfo) {
+      const { email, name } = userInfo;
+      if (email) {
+        username = email;
+      } else if (name) {
+        username = name;
+      }
     }
 
     if (wasStore !== null) {
@@ -185,9 +199,10 @@ class Question extends Component {
   ratingSubmitAction = () => {
     const {
       response,
-      question
+      question,
+      rating
     } = this.state;
-    if ((question.type !== 'rating') && (response >= 4)) {
+    if ((question.type !== 'rating') && ((response >= 4) || (rating >= 4))) {
       this.setState({ sendStoreConfirmationVisible: true, questionVisibile: false });
     } else {
       this.ratingResponse(false);

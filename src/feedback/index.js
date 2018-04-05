@@ -12,9 +12,9 @@ import {
   AsyncStorage
 } from 'react-native';
 import styles from './styles';
-import icons from './../../config/icons';
-import feedback from '../../functions/feedback';
-
+import icons from '../../config/icons';
+import feedback from '../functions/feedback';
+// Adaptar functions
 // create a component
 class Feedback extends Component {
   constructor(props) {
