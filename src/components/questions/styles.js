@@ -1,3 +1,5 @@
+import deviceInfo from '../../deviceInfo';
+
 export default {
   title: {
     alignSelf: 'center',
@@ -24,6 +26,8 @@ export default {
     marginBottom: 10
   },
   whiteBoxContainer: {
+    marginLeft: deviceInfo.isTablet ? 150 : 20,
+    marginRight: deviceInfo.isTablet ? 150 : 20,
     backgroundColor: '#fff',
     borderRadius: 5
   },
