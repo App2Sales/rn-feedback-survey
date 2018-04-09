@@ -210,14 +210,22 @@ class Question extends Component {
   }
 
   sendToStore = () => {
-    const storeBaseUrl = Platform.OS === 'android' ? GOOGLE_PREFIX : APPLENATIVE_PREFIX;
-    const completeUrl = `${storeBaseUrl}${deviceInfo.bundleId}`;
-    Linking.canOpenURL(completeUrl).then((supported) => {
-      if (supported) {
-        Linking.openURL(completeUrl);
-      }
-    });
-    this.ratingResponse(true);
+    let completeUrl = null;
+    if (Platform.OS === 'android') {
+      completeUrl = `${GOOGLE_PREFIX}${deviceInfo.bundleId}`;
+    } else if (appleID) {       
+      completeUrl = `${APPLENATIVE_PREFIX}${appleID}`;
+    }
+    if (completeUrl) {
+      Linking.canOpenURL(completeUrl).then((supported) => {
+        if (supported) {
+          Linking.openURL(completeUrl);
+        }
+      });
+      this.ratingResponse(true);
+    } else {
+      this.ratingResponse(false);
+    }
   }
 
   handleCheckAlternatives = result => this.state.question.question.alternatives.map(item => ({
