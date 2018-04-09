@@ -210,10 +210,11 @@ class Question extends Component {
   }
 
   sendToStore = () => {
+    const { appleID } = this.props;
     let completeUrl = null;
     if (Platform.OS === 'android') {
       completeUrl = `${GOOGLE_PREFIX}${deviceInfo.bundleId}`;
-    } else if (appleID) {       
+    } else if (appleID) {
       completeUrl = `${APPLENATIVE_PREFIX}${appleID}`;
     }
     if (completeUrl) {
@@ -464,8 +465,9 @@ Question.propTypes = {
     * to make more easy the call on the father class!! */
   title: PropTypes.string,
   userInfo: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  baseUrl: PropTypes.string,
-  project: PropTypes.string
+  baseUrl: PropTypes.string.isRequired,
+  project: PropTypes.string.isRequired,
+  appleID: PropTypes.number.isRequired
 };
 
 Question.defaultProps = {
