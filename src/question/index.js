@@ -14,7 +14,6 @@ import PropTypes from 'prop-types';
 import Modal from 'react-native-modal';
 import moment from 'moment';
 
-
 import {
   RatingQuestionComponent,
   MultipleChoiceQuestionComponent,
@@ -94,7 +93,7 @@ class Question extends Component {
   getAppearQuestion = (localSurvey, delay) => localSurvey.questionMap.find((item) => {
     let result = false;
     if (localSurvey.lastAppearance) {
-      const diff = moment(localSurvey.lastAppearance).diff(1522678252, 'days');
+      const diff = moment(localSurvey.lastAppearance).diff(new Date().getTime(), 'days');
       result = diff >= delay && !item.answered;
     } else {
       result = !item.answered;
@@ -153,10 +152,12 @@ class Question extends Component {
   }
 
   updateLastAppearance = (survey) => {
-    survey.lastAppearance = new Date().getTime();
+    const newSurvey = {};
+    Object.assign(newSurvey, survey);
+    newSurvey.lastAppearance = new Date().getTime();
     AsyncStorage.setItem(
       '@app2sales-feedback-survey',
-      JSON.stringify(survey)
+      JSON.stringify(newSurvey)
     );
   }
 
@@ -272,7 +273,7 @@ class Question extends Component {
       const localSurvey = JSON.parse(value);
 
       const newSurveyToSave = {
-        survey: serverSurvey,
+        survey: serverSurvey.survey,
         questionMap: this.getPreparedQuestions(serverSurvey.questions),
         lastFetch: new Date().getTime(),
         lastAppearance: null
