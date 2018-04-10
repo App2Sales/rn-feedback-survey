@@ -26,7 +26,10 @@ class TextQuestionComponent extends Component {
           <TextInput
             multiline
             onChangeText={onchangeTextQuestion}
-            style={styles.textIpuntQuestion} />
+            style={styles.textIpuntQuestion}
+            underlineColorAndroid={'transparent'}
+          />
+          <View style={styles.line} />
         </View>
         {renderButtons}
       </View>);

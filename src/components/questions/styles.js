@@ -100,5 +100,10 @@ export default {
   },
   textIpuntQuestion: {
     width: '100%'
+  },
+  line: {
+    height: 0.8,
+    backgroundColor: 'grey',
+    width: '100%'
   }
 };
