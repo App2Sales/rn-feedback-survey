@@ -91,9 +91,18 @@ class Question extends Component {
     return [];
   }
 
-  getAppearQuestion = (localQuestions, delay) => localQuestions.questionMap.find((item) => {
-    const diff = moment(localQuestions.lastAppearance).diff(new Date().getTime(), 'days');
-    return diff >= delay && !item.answered;
+  getAppearQuestion = (localSurvey, delay) => localSurvey.questionMap.find((item) => {
+    let result = false;
+    if (localSurvey.lastAppearance) {
+      const diff = moment(localSurvey.lastAppearance).diff(1522678252, 'days');
+      result = diff >= delay && !item.answered;
+    } else {
+      result = !item.answered;
+    }
+    if (result) {
+      this.updateLastAppearance(localSurvey);
+    }
+    return result;
   });
 
   getEmoji(item) {
@@ -141,6 +150,14 @@ class Question extends Component {
       so: Platform.OS,
       timestamp: new Date().getTime()
     });
+  }
+
+  updateLastAppearance = (survey) => {
+    survey.lastAppearance = new Date().getTime();
+    AsyncStorage.setItem(
+      '@app2sales-feedback-survey',
+      JSON.stringify(survey)
+    );
   }
 
   handleAppearQuestion = (localQuestions) => {
@@ -210,12 +227,11 @@ class Question extends Component {
   }
 
   sendToStore = () => {
-    const { appleID } = this.props;
     let completeUrl = null;
     if (Platform.OS === 'android') {
       completeUrl = `${GOOGLE_PREFIX}${deviceInfo.bundleId}`;
-    } else if (appleID) {
-      completeUrl = `${APPLENATIVE_PREFIX}${appleID}`;
+    } else if (this.props.appleID) {
+      completeUrl = `${APPLENATIVE_PREFIX}${this.props.appleID}`;
     }
     if (completeUrl) {
       Linking.canOpenURL(completeUrl).then((supported) => {
@@ -259,7 +275,7 @@ class Question extends Component {
         survey: serverSurvey,
         questionMap: this.getPreparedQuestions(serverSurvey.questions),
         lastFetch: new Date().getTime(),
-        lastAppearance: new Date().getTime()
+        lastAppearance: null
       };
 
       if (!localSurvey) {

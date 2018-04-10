@@ -1,5 +1,4 @@
 import { AsyncStorage } from 'react-native';
-import Reactotron from 'reactotron-react-native';
 
 import NetworkHandle from '../network';
 
@@ -66,8 +65,7 @@ class Questions {
       .setItem(
         '@app2sales-queue-persist-answers',
         JSON.stringify(data)
-      ).then(() => {
-        Reactotron.log('FAIL');
+      ).then(() => {        
         callback();
       });
   };
