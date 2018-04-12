@@ -138,7 +138,7 @@ class Question extends Component {
         response,
         username,
         so: Platform.OS,
-        timestamp: new Date().getTime(),
+        timestamp: new Date(),
         wasStore
       });
     }
@@ -147,7 +147,7 @@ class Question extends Component {
       response,
       username,
       so: Platform.OS,
-      timestamp: new Date().getTime()
+      timestamp: new Date()
     });
   }
 
@@ -412,7 +412,7 @@ class Question extends Component {
       () => {
         this.questionUtils.onQuestionAnswered({
           question,
-          response: this.getPreparedResponse(user, response),
+          response: this.getPreparedResponse(user, response.text),
           user,
           survey
         }, this.markQuestionAsAnswered());
