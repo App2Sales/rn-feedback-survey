@@ -3558,6 +3558,10 @@ react-native-animatable@^1.2.4:
   dependencies:
     prop-types "^15.5.10"
 
+react-native-device-info@^0.21.5:
+  version "0.21.5"
+  resolved "https://registry.yarnpkg.com/react-native-device-info/-/react-native-device-info-0.21.5.tgz#99478a2d68182e012297f2d63f2bd1b788106dee"
+
 react-native-elements@^0.19.0:
   version "0.19.0"
   resolved "https://registry.yarnpkg.com/react-native-elements/-/react-native-elements-0.19.0.tgz#737c5198bf7487f9986e2023826cd0bd7a500366"
