@@ -3,7 +3,6 @@ import {
   Text,
   View,
   Image,
-  NetInfo,
   Linking,
   Platform,
   AsyncStorage,
@@ -203,9 +202,8 @@ class Question extends Component {
       survey
     } = this.state;
 
-    const responseData = this.getPreparedResponse(user, response, wasStore);
     this.questionUtils.onQuestionAnswered({
-      ...responseData,
+      responseData: this.getPreparedResponse(user, response.text, wasStore),
       question,
       user,
       survey
@@ -409,9 +407,15 @@ class Question extends Component {
     return this.renderButtons(
       this.closeModal,
       () => {
-        const responseData = this.getPreparedResponse(user, response.text);
+        let handledAnswer = null;
+        if (typeof response === 'string' ||
+            typeof response === 'number') {
+          handledAnswer = response;
+        } else {
+          handledAnswer = response.text;
+        }
         this.questionUtils.onQuestionAnswered({
-          ...responseData,
+          responseData: this.getPreparedResponse(user, handledAnswer),
           question,
           user,
           survey

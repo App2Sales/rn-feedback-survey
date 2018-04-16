@@ -18,7 +18,7 @@ class Questions {
   answerCallbackSuccess = (data, callback = null) => {
     const {
       question,
-      response,
+      responseData,
       user,
       survey
     } = data;
@@ -36,10 +36,10 @@ class Questions {
       .then((resp) => {
         if (resp.success) {
           const sendData = {
+            ...responseData,
             project: this.project,
-            surveyKey: survey.survey.key,
+            surveyKey: survey.key,
             questionKey: question.question.key,
-            userResponse: response,
             userKey: resp.userKey
           };
           fetch(`${this.baseUrl}/responseQuestion`, {
@@ -65,7 +65,7 @@ class Questions {
       .setItem(
         '@app2sales-queue-persist-answers',
         JSON.stringify(data)
-      ).then(() => {        
+      ).then(() => {
         callback();
       });
   };
