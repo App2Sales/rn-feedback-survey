@@ -121,34 +121,32 @@ class Question extends Component {
     }
   }
 
-  getPreparedResponse = (user, response, wasStore = null) => {
-    const { userInfo } = user;
-    let username = 'Anônimo';
+  getPreparedUserName = (userInfo) => {
     if (userInfo) {
       const { email, name } = userInfo;
       if (email) {
-        username = email;
+        return email;
       } else if (name) {
-        username = name;
+        return name;
       }
     }
+    return 'Anônimo';
+  }
 
-    if (wasStore !== null) {
-      return ({
-        response,
-        username,
-        so: Platform.OS,
-        timestamp: new Date(),
-        wasStore
-      });
+  getPreparedResponse = (user, response, wasStore = null) => {
+    const { userInfo } = user;
+    const preparedAnswer = {
+      answer: response,
+      userName: this.getPreparedUserName(userInfo),
+      platform: Platform.OS,
+      timestamp: new Date()
+    };
+
+    if (wasStore) {
+      return ({ ...preparedAnswer, wasStore });
     }
 
-    return ({
-      response,
-      username,
-      so: Platform.OS,
-      timestamp: new Date()
-    });
+    return preparedAnswer;
   }
 
   updateLastAppearance = (survey) => {
