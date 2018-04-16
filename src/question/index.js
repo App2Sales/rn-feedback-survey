@@ -203,9 +203,10 @@ class Question extends Component {
       survey
     } = this.state;
 
+    const responseData = this.getPreparedResponse(user, response, wasStore);
     this.questionUtils.onQuestionAnswered({
+      ...responseData,
       question,
-      response: this.getPreparedResponse(user, response, wasStore),
       user,
       survey
     }, this.markQuestionAsAnswered());
@@ -408,9 +409,10 @@ class Question extends Component {
     return this.renderButtons(
       this.closeModal,
       () => {
+        const responseData = this.getPreparedResponse(user, response.text);
         this.questionUtils.onQuestionAnswered({
+          ...responseData,
           question,
-          response: this.getPreparedResponse(user, response.text),
           user,
           survey
         }, this.markQuestionAsAnswered());
@@ -429,7 +431,6 @@ class Question extends Component {
     if (question !== null && questionVisibile) {
       switch (question.question.type) {
         case 'multiple-choice':
-          // return this.getComponentMultipleChoiceQuestion();
           return (
             <MultipleChoiceQuestionComponent
               title={this.props.title}
@@ -438,7 +439,6 @@ class Question extends Component {
               alternatives={this.multipleChoiceAlternatives()} />
           );
         case 'text':
-          // return this.getComponentTextQuestion();
           return (
             <TextQuestionComponent
               title={this.props.title}
@@ -446,7 +446,6 @@ class Question extends Component {
               renderButtons={this.renderButtonsForComponents()}
               onchangeTextQuestion={this.onchangeTextQuestion} />);
         case 'rating':
-          // return this.getComponentRatingQuestion();
           return (
             <RatingQuestionComponent
               title={this.props.title}
