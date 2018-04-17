@@ -74,15 +74,17 @@ class Question extends Component {
     if (questions.length > 0) {
       const preparedQuestion = [];
       questions.forEach((item, index) => {
-        const question = item;
-        if (item.type === 'multiple-choice' || item.type === 'rating') {
-          if (typeof question.alternatives[0] !== 'object') {
-            question.alternatives =
-              item.alternatives.map((value, i) =>
-                ({ index: i, text: value, checked: false }));
+        if (this.haveNeededKeys(Object.keys(item))) {
+          const question = item;
+          if (item.type === 'multiple-choice' || item.type === 'rating') {
+            if (typeof question.alternatives[0] !== 'object') {
+              question.alternatives =
+                item.alternatives.map((value, i) =>
+                  ({ index: i, text: value, checked: false }));
+            }
           }
+          preparedQuestion.push({ index, question, answered: false });
         }
-        preparedQuestion.push({ index, question, answered: false });
       });
       return preparedQuestion;
     }
@@ -147,6 +149,12 @@ class Question extends Component {
 
     return preparedAnswer;
   }
+
+  haveNeededKeys = array =>
+    array.includes('alternatives') &&
+    array.includes('title') &&
+    array.includes('key') &&
+    array.includes('type');
 
   updateLastAppearance = (survey) => {
     const newSurvey = {};
@@ -268,14 +276,12 @@ class Question extends Component {
   configure = (serverSurvey) => {
     AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
       const localSurvey = JSON.parse(value);
-
       const newSurveyToSave = {
         survey: serverSurvey.survey,
         questionMap: this.getPreparedQuestions(serverSurvey.questions),
         lastFetch: new Date().getTime(),
         lastAppearance: null
       };
-
       if (!localSurvey) {
         this.handleAppearQuestion(newSurveyToSave);
         return;

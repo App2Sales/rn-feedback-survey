@@ -26,8 +26,8 @@ export default {
     marginBottom: 10
   },
   whiteBoxContainer: {
-    marginLeft: deviceInfo.isTablet ? 150 : 20,
-    marginRight: deviceInfo.isTablet ? 150 : 20,
+    marginLeft: deviceInfo.isTablet ? 150 : 10,
+    marginRight: deviceInfo.isTablet ? 150 : 10,
     backgroundColor: '#fff',
     borderRadius: 5
   },
