@@ -2,7 +2,6 @@ import { AsyncStorage } from 'react-native';
 
 import NetworkHandle from '../network';
 
-
 class Questions {
   constructor(baseUrl, project) {
     this.baseUrl = baseUrl;
@@ -42,6 +41,7 @@ class Questions {
             questionKey: question.question.key,
             userKey: resp.userKey
           };
+
           fetch(`${this.baseUrl}/responseQuestion`, {
             method: 'POST',
             headers: {
@@ -55,7 +55,7 @@ class Questions {
                 callback();
               }
             }
-          }).catch(() => { });
+          });
         }
       }).catch(() => { });
   }

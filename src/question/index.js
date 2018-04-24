@@ -99,9 +99,11 @@ class Question extends Component {
     } else {
       result = !item.answered;
     }
+
     if (result) {
       this.updateLastAppearance(localSurvey);
     }
+
     return result;
   });
 
@@ -150,11 +152,7 @@ class Question extends Component {
     return preparedAnswer;
   }
 
-  haveNeededKeys = array =>
-    array.includes('alternatives') &&
-    array.includes('title') &&
-    array.includes('key') &&
-    array.includes('type');
+  haveNeededKeys = array => array.includes('title') && array.includes('key') && array.includes('type');
 
   updateLastAppearance = (survey) => {
     const newSurvey = {};
@@ -209,13 +207,13 @@ class Question extends Component {
       question,
       survey
     } = this.state;
-
-    this.questionUtils.onQuestionAnswered({
+    const handledObject = {
       responseData: this.getPreparedResponse(user, response.text, wasStore),
       question,
       user,
       survey
-    }, this.markQuestionAsAnswered());
+    };
+    this.questionUtils.onQuestionAnswered(handledObject, this.markQuestionAsAnswered());
   }
 
   ratingSubmitAction = () => {
@@ -282,10 +280,12 @@ class Question extends Component {
         lastFetch: new Date().getTime(),
         lastAppearance: null
       };
+
       if (!localSurvey) {
         this.handleAppearQuestion(newSurveyToSave);
         return;
       }
+      
       this.mergeSurvey(localSurvey, newSurveyToSave);
     });
   }
@@ -420,12 +420,13 @@ class Question extends Component {
         } else {
           handledAnswer = response.text;
         }
-        this.questionUtils.onQuestionAnswered({
+        const handledObject = {
           responseData: this.getPreparedResponse(user, handledAnswer),
           question,
           user,
           survey
-        }, this.markQuestionAsAnswered());
+        };
+        this.questionUtils.onQuestionAnswered(handledObject, this.markQuestionAsAnswered());
         this.closeModal();
       }
     );
