@@ -5,7 +5,6 @@ import {
   Image,
   Linking,
   Platform,
-  AsyncStorage,
   TouchableOpacity
 } from 'react-native';
 import { CheckBox } from 'react-native-elements';
@@ -18,10 +17,12 @@ import {
   MultipleChoiceQuestionComponent,
   TextQuestionComponent
 } from '../components';
+import DbManager from '../db';
 import { Questions } from '../functions';
 import deviceInfo from '../deviceInfo';
 import icons from '../../config/icons';
 import styles from './styles';
+import Reactotron from 'reactotron-react-native';
 
 const APPLENATIVE_PREFIX = 'itms-apps://itunes.apple.com/app/id';
 const GOOGLE_PREFIX = 'http://play.google.com/store/apps/details?id=';
@@ -95,15 +96,11 @@ class Question extends Component {
     let result = false;
     if (localSurvey.lastAppearance) {
       const diff = moment(localSurvey.lastAppearance).diff(new Date().getTime(), 'days');
+      Reactotron.log(delay);
       result = diff >= delay && !item.answered;
     } else {
       result = !item.answered;
     }
-
-    if (result) {
-      this.updateLastAppearance(localSurvey);
-    }
-
     return result;
   });
 
@@ -158,15 +155,13 @@ class Question extends Component {
     const newSurvey = {};
     Object.assign(newSurvey, survey);
     newSurvey.lastAppearance = new Date().getTime();
-    AsyncStorage.setItem(
-      '@app2sales-feedback-survey',
-      JSON.stringify(newSurvey)
-    );
+    DbManager.save(newSurvey);
   }
 
   handleAppearQuestion = (localQuestions) => {
     const question = this.getAppearQuestion(localQuestions, localQuestions.survey.appearDelay);
-    if (question !== undefined) {
+    if (question) {
+      this.updateLastAppearance(localQuestions);
       this.setState({
         visible: true,
         questionVisibile: true,
@@ -176,14 +171,10 @@ class Question extends Component {
     } else {
       this.setState({ visible: false });
     }
-    AsyncStorage.setItem(
-      '@app2sales-feedback-survey',
-      JSON.stringify(localQuestions)
-    );
   }
 
   markQuestionAsAnswered = () => {
-    AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
+    DbManager.read((value) => {
       const localQuestions = JSON.parse(value);
       localQuestions.questionMap = localQuestions.questionMap.map((item) => {
         const newItem = {};
@@ -193,10 +184,7 @@ class Question extends Component {
         }
         return newItem;
       });
-      AsyncStorage.setItem(
-        '@app2sales-feedback-survey',
-        JSON.stringify(localQuestions)
-      );
+      DbManager.save(localQuestions);
     });
   }
 
@@ -272,7 +260,7 @@ class Question extends Component {
   ))
 
   configure = (serverSurvey) => {
-    AsyncStorage.getItem('@app2sales-feedback-survey').then((value) => {
+    DbManager.read((value) => {
       const localSurvey = JSON.parse(value);
       const newSurveyToSave = {
         survey: serverSurvey.survey,
@@ -285,7 +273,7 @@ class Question extends Component {
         this.handleAppearQuestion(newSurveyToSave);
         return;
       }
-      
+
       this.mergeSurvey(localSurvey, newSurveyToSave);
     });
   }
@@ -293,6 +281,7 @@ class Question extends Component {
   mergeSurvey = (localSurvey, serverPreparedSurvey) => {
     const newSurvey = {};
     Object.assign(newSurvey, serverPreparedSurvey);
+    newSurvey.lastAppearance = localSurvey.lastAppearance;
     newSurvey.questionMap =
       serverPreparedSurvey
         .questionMap
