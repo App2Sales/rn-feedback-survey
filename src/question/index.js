@@ -22,7 +22,6 @@ import { Questions } from '../functions';
 import deviceInfo from '../deviceInfo';
 import icons from '../../config/icons';
 import styles from './styles';
-import Reactotron from 'reactotron-react-native';
 
 const APPLENATIVE_PREFIX = 'itms-apps://itunes.apple.com/app/id';
 const GOOGLE_PREFIX = 'http://play.google.com/store/apps/details?id=';
@@ -95,7 +94,7 @@ class Question extends Component {
   getAppearQuestion = (localSurvey, delay) => localSurvey.questionMap.find((item) => {
     let result = false;
     if (localSurvey.lastAppearance) {
-      const diff = moment(localSurvey.lastAppearance).diff(new Date().getTime(), 'days');
+      const diff = moment(new Date().getTime()).diff(localSurvey.lastAppearance, 'days');
       result = diff >= delay && !item.answered;
     } else {
       result = !item.answered;
@@ -169,7 +168,7 @@ class Question extends Component {
           survey: localQuestions.survey
         });
       } else {
-        this.setState({ visible: false });
+        DbManager.save(localQuestions);
       }
     } else {
       this.setState({ visible: false });
@@ -271,14 +270,12 @@ class Question extends Component {
         lastFetch: new Date().getTime(),
         lastAppearance: null
       };
-
       if (localSurvey) {
         this.mergeSurvey(localSurvey, newSurveyToSave);
       } else {
         // Pass second parameter true or false if is for appear now
         this.handleAppearQuestion(newSurveyToSave, false);
       }
-
     });
   }
 
