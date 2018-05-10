@@ -96,7 +96,6 @@ class Question extends Component {
     let result = false;
     if (localSurvey.lastAppearance) {
       const diff = moment(localSurvey.lastAppearance).diff(new Date().getTime(), 'days');
-      Reactotron.log(delay);
       result = diff >= delay && !item.answered;
     } else {
       result = !item.answered;
@@ -158,16 +157,20 @@ class Question extends Component {
     DbManager.save(newSurvey);
   }
 
-  handleAppearQuestion = (localQuestions) => {
+  handleAppearQuestion = (localQuestions, appearNow = true) => {
     const question = this.getAppearQuestion(localQuestions, localQuestions.survey.appearDelay);
     if (question) {
-      this.updateLastAppearance(localQuestions);
-      this.setState({
-        visible: true,
-        questionVisibile: true,
-        question,
-        survey: localQuestions.survey
-      });
+      if (appearNow) {
+        this.updateLastAppearance(localQuestions);
+        this.setState({
+          visible: true,
+          questionVisibile: true,
+          question,
+          survey: localQuestions.survey
+        });
+      } else {
+        this.setState({ visible: false });
+      }
     } else {
       this.setState({ visible: false });
     }
@@ -269,12 +272,13 @@ class Question extends Component {
         lastAppearance: null
       };
 
-      if (!localSurvey) {
-        this.handleAppearQuestion(newSurveyToSave);
-        return;
+      if (localSurvey) {
+        this.mergeSurvey(localSurvey, newSurveyToSave);
+      } else {
+        // Pass second parameter true or false if is for appear now
+        this.handleAppearQuestion(newSurveyToSave, false);
       }
 
-      this.mergeSurvey(localSurvey, newSurveyToSave);
     });
   }
 

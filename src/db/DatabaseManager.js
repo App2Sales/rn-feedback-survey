@@ -14,7 +14,7 @@ class DbManager {
     );
   }
 
-  static clearAll = () => AsyncStorage.removeItem('@app2sales-feedback-survey');
+  static clearAllSurveyData = () => AsyncStorage.removeItem('@app2sales-feedback-survey');
 }
 
 export default DbManager;

@@ -1,6 +1,7 @@
-import { Question, Feedback } from './src';
+import { Question, Feedback, DbManager } from './src';
 
 export {
   Question,
-  Feedback
+  Feedback,
+  DbManager
 };
